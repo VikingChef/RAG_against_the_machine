@@ -1,0 +1,34 @@
+# Virtual environment
+.venv/
+
+# Python cache / compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Type checking / test caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# IDE / OS
+.vscode/
+.DS_Store
+
+# Generated project data
+data/processed/
+outputs/
+
+# Model / Hugging Face cache
+.cache/
+huggingface/
+
+# Supplied project materials
+RAG.pdf
+datasets_public.zip
+moulinette.zip
+vllm-0.10.1.zip
