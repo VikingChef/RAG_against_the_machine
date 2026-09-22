@@ -1,6 +1,11 @@
+"""Define the Pydantic models required for evaluator-facing input and
+output structures.
+"""
+
 import uuid
 
 from pydantic import BaseModel, Field
+
 
 class MinimalSource(BaseModel):
     """Describe where one retrieved source comes from."""
