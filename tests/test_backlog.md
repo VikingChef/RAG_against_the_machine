@@ -18,3 +18,9 @@
 - Nest `MinimalSource` correctly inside `MinimalSearchResults`.
 - Nest `MinimalAnswer` correctly inside `StudentSearchResultsAndAnswer`.
 - Serialize evaluator-facing models into the expected structure.
+
+### DatasetLoader cases
+- valid dataset file loads successfully
+- missing file raises FileMissingError
+- malformed JSON raises InvalidJsonError
+- structurally invalid dataset raises InvalidDatasetError
