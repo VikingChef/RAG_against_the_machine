@@ -7,6 +7,7 @@ from src.models.evaluation_models import (
     StudentSearchResults,
     StudentSearchResultsAndAnswer
 )
+from src.errors.application_errors import DatasetWriteError
 
 
 class DataSetWriter:
@@ -20,5 +21,9 @@ class DataSetWriter:
 
         output_data = data.model_dump()
 
-        with open(path, "w", encoding="utf-8") as file:
-            json.dump(output_data, file)
+        try:
+            with open(path, "w", encoding="utf-8") as file:
+                json.dump(output_data, file, indent=4)
+
+        except OSError:
+            raise DatasetWriteError(path)

@@ -24,3 +24,17 @@
 - missing file raises FileMissingError
 - malformed JSON raises InvalidJsonError
 - structurally invalid dataset raises InvalidDatasetError
+
+### Dataset writer cases
+- writes StudentSearchResults successfully
+- writes StudentSearchResultsAndAnswer successfully
+- output JSON has the expected structure
+- write failure raises DatasetWriteError
+
+
+### CorpusLoader
+- Load supported source files from a valid corpus root.
+- Discover supported files inside nested directories.
+- Skip unsupported file extensions.
+- Reject an invalid or non-directory corpus root with `InvalidCorpusRootError`.
+- Raise `SourceFileReadError` when an eligible source file cannot be read or decoded.
