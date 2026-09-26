@@ -49,3 +49,11 @@ class SourceFileReadError(Exception):
     def __init__(self, path: Path) -> None:
         self.path = path
         super().__init__(f"Could not read source file: {path}")
+
+
+class MissingAstPositionError(Exception):
+    """Raised when an AST node lacks end_lineno or end_col_offset."""
+
+    def __init__(self, node_type: str) -> None:
+        self.node_type = node_type
+        super().__init__(f"Missing AST position for node type: {node_type}")
