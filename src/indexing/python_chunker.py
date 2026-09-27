@@ -17,6 +17,7 @@ class PythonChunker:
         """Split one loaded Python source file into structured chunks."""
         syntax_tree = ast.parse(source_file.text)
         chunks: list[Chunk] = []
+        module_nodes: list[ast.stmt] = []
 
         for node in syntax_tree.body:
             if not isinstance(
@@ -27,7 +28,17 @@ class PythonChunker:
                     ast.ClassDef,
                 ),
             ):
+                module_nodes.append(node)
                 continue
+
+            if module_nodes:
+                chunks.extend(
+                    self._chunk_module_nodes(
+                        source_file,
+                        module_nodes,
+                    ),
+                )
+                module_nodes = []
 
             node_text = ast.get_source_segment(
                 source_file.text,
@@ -50,6 +61,78 @@ class PythonChunker:
                     self._chunk_oversized_node(
                         source_file,
                         node,
+                    ),
+                )
+
+        if module_nodes:
+            chunks.extend(
+                self._chunk_module_nodes(
+                    source_file,
+                    module_nodes,
+                ),
+            )
+
+        return chunks
+
+    def _chunk_module_nodes(
+        self,
+        source_file: LoadedSourceFile,
+        module_nodes: list[ast.stmt],
+    ) -> list[Chunk]:
+        """Chunk a consecutive group of module-level statements."""
+        first_node = module_nodes[0]
+        first_char_index, _ = get_node_character_indexes(
+            source_file.text,
+            first_node,
+        )
+
+        last_node = module_nodes[-1]
+        _, last_char_index = get_node_character_indexes(
+            source_file.text,
+            last_node,
+        )
+
+        module_text = source_file.text[
+            first_char_index:last_char_index + 1
+        ]
+
+        if len(module_text) <= self.max_chunk_size:
+            return [
+                self._build_chunk(
+                    source_file,
+                    module_text,
+                    first_char_index,
+                    last_char_index,
+                    "module",
+                ),
+            ]
+
+        chunks: list[Chunk] = []
+
+        for node in module_nodes:
+            node_text = ast.get_source_segment(
+                source_file.text,
+                node,
+            )
+
+            if node_text is None:
+                continue
+
+            if len(node_text) <= self.max_chunk_size:
+                chunks.append(
+                    self._build_ast_chunk(
+                        source_file,
+                        node,
+                        node_text,
+                        "module",
+                    ),
+                )
+            else:
+                chunks.extend(
+                    self._split_oversized_child(
+                        source_file,
+                        node,
+                        node_text,
                     ),
                 )
 
@@ -195,6 +278,7 @@ class PythonChunker:
                 + len(raw_piece)
                 - 1
             )
+
             chunks.append(
                 self._build_chunk(
                     source_file,
@@ -222,6 +306,7 @@ class PythonChunker:
                 node,
             )
         )
+
         return self._build_chunk(
             source_file,
             text,
@@ -255,6 +340,8 @@ class PythonChunker:
         """Return the chunk type for a top-level structural node."""
         if isinstance(node, ast.FunctionDef):
             return "function"
+
         if isinstance(node, ast.AsyncFunctionDef):
             return "async_function"
+
         return "class"
