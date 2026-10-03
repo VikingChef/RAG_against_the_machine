@@ -41,6 +41,39 @@ class TextChunker:
         if not source_file.text.strip():
             return []
 
+        if source_file.file_type == ".md":
+            blocks = self._parse_markdown_blocks(
+                text=source_file.text,
+            )
+        else:
+            blocks = self._parse_text_blocks(
+                text=source_file.text,
+            )
+
+        grouped_blocks = self._group_blocks(blocks)
+        split_blocks = []
+
+        for block in grouped_blocks:
+            split_blocks.extend(
+                self._split_oversized_block(
+                    block,
+                    source_file.text,
+                )
+            )
+
+        overlapped_blocks = self._apply_overlap(split_blocks)
+        final_chunks: list[Chunk] = []
+
+        for block in overlapped_blocks:
+            final_chunks.append(
+                self._build_chunk(
+                    source_file,
+                    block,
+                )
+            )
+
+        return final_chunks
+
     def _parse_text_blocks(
         self,
         text: str,
@@ -695,3 +728,32 @@ class TextChunker:
                 overlapped_blocks.append(current_block)
 
         return overlapped_blocks
+
+    def _build_chunk(
+        self,
+        source_file: LoadedSourceFile,
+        block: _TextBlock,
+    ) -> Chunk:
+        """Build one final Chunk from a finalized text block."""
+
+        chunk_text = source_file.text[
+            block.start_index:block.end_index + 1
+        ]
+
+        if block.block_type == "line_fallback":
+            chunk_type = "line_fallback"
+        elif block.block_type == "character_fallback":
+            chunk_type = "character_fallback"
+        elif source_file.file_type == ".md":
+            chunk_type = "markdown"
+        else:
+            chunk_type = "text"
+
+        return Chunk(
+            file_path=str(source_file.path),
+            text=chunk_text,
+            first_character_index=block.start_index,
+            last_character_index=block.end_index,
+            file_type=source_file.file_type,
+            chunk_type=chunk_type,
+        )
