@@ -28,11 +28,14 @@ class ModelManager:
         """Return the tokenizer, loading and caching it if needed."""
 
         if self._tokenizer is None:
-            self._tokenizer = (
-                AutoTokenizer.from_pretrained(self.model_name)
+            self._tokenizer = AutoTokenizer.from_pretrained(
+                self.model_name
             )
 
-        if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+        if not isinstance(
+            self._tokenizer,
+            PreTrainedTokenizerBase,
+        ):
             raise TypeError(
                 "Loaded tokenizer is not a valid pretrained tokenizer"
             )
@@ -46,12 +49,14 @@ class ModelManager:
         """Return the model, loading and caching it if needed."""
 
         if self._model is None:
-            self._model = (
-                AutoModelForCausalLM.from_pretrained(self.model_name)
+            self._model = AutoModelForCausalLM.from_pretrained(
+                self.model_name
             )
 
         if not isinstance(self._model, PreTrainedModel):
-            raise TypeError("Loaded model is not a valid pretrained model")
+            raise TypeError(
+                "Loaded model is not a valid pretrained model"
+            )
 
         return self._model
 
