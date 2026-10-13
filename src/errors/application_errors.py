@@ -57,3 +57,23 @@ class MissingAstPositionError(Exception):
     def __init__(self, node_type: str) -> None:
         self.node_type = node_type
         super().__init__(f"Missing AST position for node type: {node_type}")
+
+
+class SourceChunkNotFoundError(Exception):
+    """Raised when a saved source cannot be matched to an indexed chunk."""
+
+    def __init__(
+        self,
+        file_path: str,
+        first_character_index: int,
+        last_character_index: int,
+    ) -> None:
+        self.file_path = file_path
+        self.first_character_index = first_character_index
+        self.last_character_index = last_character_index
+
+        super().__init__(
+            "Could not resolve indexed source chunk: "
+            f"{file_path} "
+            f"[{first_character_index}:{last_character_index}]"
+        )
