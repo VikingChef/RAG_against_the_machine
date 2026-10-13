@@ -25,7 +25,6 @@ class AnswerPipeline:
         generator: Generator,
     ) -> None:
         """Initialize the pipeline with its shared services."""
-
         self.retriever = retriever
         self.context_builder = context_builder
         self.prompt_builder = prompt_builder
@@ -33,14 +32,21 @@ class AnswerPipeline:
         self.token_budget = token_budget
         self.generator = generator
 
-    def answer(
-        self,
-        query: Query,
-    ) -> AnswerResult:
-        """Generate an answer for a query using the full pipeline."""
-
+    def answer(self, query: Query) -> AnswerResult:
+        """Retrieve sources and generate an answer for a query."""
         search_results = self.retriever.search(query)
 
+        return self.answer_from_results(
+            query,
+            search_results,
+        )
+
+    def answer_from_results(
+        self,
+        query: Query,
+        search_results: list[SearchResult],
+    ) -> AnswerResult:
+        """Generate an answer from already retrieved search results."""
         fitted_prompt = self._build_fitting_prompt(
             query,
             search_results,
@@ -56,7 +62,6 @@ class AnswerPipeline:
             )
 
         context, formatted_prompt = fitted_prompt
-
         answer_text = self.generator.generate(formatted_prompt)
 
         return AnswerResult(
@@ -70,17 +75,14 @@ class AnswerPipeline:
         search_results: list[SearchResult],
     ) -> tuple[ContextResult, str] | None:
         """Build the largest model prompt that fits the token budget."""
-
         selected_results = search_results[:]
 
         while True:
             context = self.context_builder.build(selected_results)
-
             prompt_string = self.prompt_builder.build(
                 query,
                 context,
             )
-
             formatted_prompt = self.model_manager.format_prompt(
                 prompt_string,
             )
