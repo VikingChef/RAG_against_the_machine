@@ -5,6 +5,7 @@ from src.context.token_budget import TokenBudget
 from src.generation.generator import Generator
 from src.generation.model_manager import ModelManager
 from src.models.answer_result import AnswerResult
+from src.models.chunk import Chunk
 from src.models.context_result import ContextResult
 from src.models.query import Query
 from src.models.search_result import SearchResult
@@ -47,38 +48,54 @@ class AnswerPipeline:
         search_results: list[SearchResult],
     ) -> AnswerResult:
         """Generate an answer from already retrieved search results."""
+        chunks = [
+            result.chunk
+            for result in search_results
+        ]
+
+        answer_text, selected_count = self._generate_from_chunks(
+            query,
+            chunks,
+        )
+
+        return AnswerResult(
+            answer=answer_text,
+            search_results=search_results[:selected_count],
+        )
+
+    def _generate_from_chunks(
+        self,
+        query: Query,
+        chunks: list[Chunk],
+    ) -> tuple[str, int]:
+        """Generate an answer from ordered chunks within the token budget."""
         fitted_prompt = self._build_fitting_prompt(
             query,
-            search_results,
+            chunks,
         )
 
         if fitted_prompt is None:
-            return AnswerResult(
-                answer=(
-                    "The query is too large to fit within the model "
-                    "context window."
-                ),
-                search_results=[],
+            return (
+                "The query is too large to fit within the model "
+                "context window.",
+                0,
             )
 
         context, formatted_prompt = fitted_prompt
         answer_text = self.generator.generate(formatted_prompt)
 
-        return AnswerResult(
-            answer=answer_text,
-            search_results=context.selected_results,
-        )
+        return answer_text, len(context.selected_chunks)
 
     def _build_fitting_prompt(
         self,
         query: Query,
-        search_results: list[SearchResult],
+        chunks: list[Chunk],
     ) -> tuple[ContextResult, str] | None:
         """Build the largest model prompt that fits the token budget."""
-        selected_results = search_results[:]
+        selected_chunks = chunks[:]
 
         while True:
-            context = self.context_builder.build(selected_results)
+            context = self.context_builder.build(selected_chunks)
             prompt_string = self.prompt_builder.build(
                 query,
                 context,
@@ -90,7 +107,7 @@ class AnswerPipeline:
             if self.token_budget.fits(formatted_prompt):
                 return context, formatted_prompt
 
-            if not selected_results:
+            if not selected_chunks:
                 return None
 
-            selected_results = selected_results[:-1]
+            selected_chunks = selected_chunks[:-1]

@@ -1,26 +1,26 @@
-"""Build model-facing context from retrieved search results."""
+"""Build model-facing context from selected chunks."""
 
+from src.models.chunk import Chunk
 from src.models.context_result import ContextResult
-from src.models.search_result import SearchResult
 
 
 class ContextBuilder:
-    """Format retrieved search results into model-facing context."""
+    """Format selected chunks into model-facing context."""
 
     def build(
         self,
-        results: list[SearchResult],
+        chunks: list[Chunk],
     ) -> ContextResult:
-        """Build model-facing context from ordered search results."""
+        """Build model-facing context from ordered chunks."""
 
         context_blocks: list[str] = []
 
-        for result in results:
+        for chunk in chunks:
             context_block = (
-                f"File: {result.chunk.file_path}\n"
-                f"Characters: {result.chunk.first_character_index}-"
-                f"{result.chunk.last_character_index}\n\n"
-                f"{result.chunk.text}"
+                f"File: {chunk.file_path}\n"
+                f"Characters: {chunk.first_character_index}-"
+                f"{chunk.last_character_index}\n\n"
+                f"{chunk.text}"
             )
             context_blocks.append(context_block)
 
@@ -28,5 +28,5 @@ class ContextBuilder:
 
         return ContextResult(
             context_text=context_text,
-            selected_results=results,
+            selected_chunks=chunks,
         )

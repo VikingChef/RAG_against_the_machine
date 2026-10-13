@@ -1,12 +1,12 @@
-"""Define the result produced by context construction."""
+"""Represent model-facing context and the chunks selected for it."""
 
 from pydantic import BaseModel
 
-from src.models.search_result import SearchResult
+from src.models.chunk import Chunk
 
 
 class ContextResult(BaseModel):
-    """Represent the output of context construction."""
+    """Represent formatted context and the chunks included in it."""
 
     context_text: str
-    selected_results: list[SearchResult]
+    selected_chunks: list[Chunk]
