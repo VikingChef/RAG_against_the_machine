@@ -1,6 +1,6 @@
 """Build BM25 indexes from finalized chunks."""
 
-from rank_bm25 import BM25Okapi  # type: ignore[import-untyped]
+from rank_bm25 import BM25Okapi
 
 from src.models.chunk import Chunk
 from src.retrieval.retrieval_utils import RetrievalTokenizer

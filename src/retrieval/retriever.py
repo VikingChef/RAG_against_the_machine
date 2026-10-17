@@ -1,6 +1,6 @@
 """Retrieve and rank chunks using BM25."""
 
-from rank_bm25 import BM25Okapi  # type: ignore[import-untyped]
+from rank_bm25 import BM25Okapi
 
 from src.models.chunk import Chunk
 from src.models.query import Query

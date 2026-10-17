@@ -15,7 +15,7 @@ class Chunk(BaseModel):
     chunk_type: str
 
     @model_validator(mode="after")
-    def validate_indexes(self):
+    def validate_indexes(self) -> "Chunk":
         if self.last_character_index < self.first_character_index:
             raise ValueError(
                 "last_character_index must be >= first_character_index"

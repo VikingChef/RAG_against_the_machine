@@ -10,7 +10,11 @@ class Query(BaseModel):
     k: int = Field(ge=0)
 
     @field_validator("text")
-    def validate_text(cls, value) -> str:
+    @classmethod
+    def validate_text(
+        cls: type["Query"],
+        value: str,
+    ) -> str:
         """Validate that the query is not empty or whitespace-only."""
         if value.strip() == "":
             raise ValueError(
