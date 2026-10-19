@@ -11,6 +11,11 @@ from src.models.query import Query
 from src.models.search_result import SearchResult
 from src.prompting.prompt_builder import PromptBuilder
 from src.retrieval.retriever import Retriever
+from src.context.context_utils import resolve_sources
+from src.output.output_builder import OutputBuilder
+from src.models.evaluation_models import MinimalAnswer
+from src.models.evaluation_models import StudentSearchResults
+from src.models.evaluation_models import StudentSearchResultsAndAnswer
 
 
 class AnswerPipeline:
@@ -24,6 +29,7 @@ class AnswerPipeline:
         model_manager: ModelManager,
         token_budget: TokenBudget,
         generator: Generator,
+        output_builder: OutputBuilder,
     ) -> None:
         """Initialize the pipeline with its shared services."""
         self.retriever = retriever
@@ -32,6 +38,7 @@ class AnswerPipeline:
         self.model_manager = model_manager
         self.token_budget = token_budget
         self.generator = generator
+        self.output_builder = output_builder
 
     def answer(self, query: Query) -> AnswerResult:
         """Retrieve sources and generate an answer for a query."""
@@ -111,3 +118,39 @@ class AnswerPipeline:
                 return None
 
             selected_chunks = selected_chunks[:-1]
+
+    def answer_dataset(
+        self,
+        search_results: StudentSearchResults,
+    ) -> StudentSearchResultsAndAnswer:
+        """Create answers for a dataset using its already-retrieved sources."""
+
+        answers: list[MinimalAnswer] = []
+
+        for search_result in search_results.search_results:
+            resolved_chunks = resolve_sources(
+                search_result.retrieved_sources,
+                self.retriever.chunks,
+            )
+
+            query = Query(
+                text=search_result.question,
+                k=search_results.k,
+            )
+
+            answer_text, _ = self._generate_from_chunks(
+                query,
+                resolved_chunks,
+            )
+
+            answer = self.output_builder.build_answer(
+                search_result=search_result,
+                answer=answer_text,
+            )
+
+            answers.append(answer)
+
+        return self.output_builder.build_answers(
+            answers=answers,
+            k=search_results.k,
+        )

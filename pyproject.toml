@@ -19,3 +19,6 @@ dev = [
     "mypy",
     "pytest",
 ]
+
+[tool.mypy]
+ignore_missing_imports = true
