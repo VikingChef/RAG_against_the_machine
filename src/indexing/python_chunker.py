@@ -15,7 +15,12 @@ class PythonChunker:
 
     def chunk(self, source_file: LoadedSourceFile) -> list[Chunk]:
         """Split one loaded Python source file into structured chunks."""
-        syntax_tree = ast.parse(source_file.text)
+
+        try:
+            syntax_tree = ast.parse(source_file.text)
+        except SyntaxError:
+            return self._chunk_unparseable_file(source_file)
+
         chunks: list[Chunk] = []
         module_nodes: list[ast.stmt] = []
 
@@ -70,6 +75,60 @@ class PythonChunker:
                     source_file,
                     module_nodes,
                 ),
+            )
+
+        return chunks
+
+    def _chunk_unparseable_file(
+        self,
+        source_file: LoadedSourceFile,
+    ) -> list[Chunk]:
+        """Split unparseable Python into line-based chunks."""
+        chunks: list[Chunk] = []
+        current_text = ""
+        current_start = 0
+        position = 0
+
+        for line in source_file.text.splitlines(keepends=True):
+            if len(current_text) + len(line) > self.max_chunk_size:
+                if current_text:
+                    chunks.append(
+                        self._build_chunk(
+                            source_file,
+                            current_text,
+                            current_start,
+                            position - 1,
+                            "syntax_fallback",
+                        )
+                    )
+                    current_text = ""
+
+                current_start = position
+
+            if len(line) > self.max_chunk_size:
+                chunks.extend(
+                    self._split_raw_line(
+                        source_file,
+                        line,
+                        position,
+                    )
+                )
+                position += len(line)
+                current_start = position
+                continue
+
+            current_text += line
+            position += len(line)
+
+        if current_text:
+            chunks.append(
+                self._build_chunk(
+                    source_file,
+                    current_text,
+                    current_start,
+                    position - 1,
+                    "syntax_fallback",
+                )
             )
 
         return chunks

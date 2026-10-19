@@ -10,15 +10,13 @@ debug:
 	uv run python -m pdb -m src
 
 clean:
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type d -name ".mypy_cache" -exec rm -rf {} +
-	find . -type d -name ".pytest_cache" -exec rm -rf {} +
-	find . -type d -name ".ruff_cache" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
+	find src -type d -name "__pycache__" -prune -exec rm -rf {} +
+	rm -rf .mypy_cache .pytest_cache .ruff_cache
+	find src -type f -name "*.pyc" -delete
 
 lint:
-	uv run flake8 .
-	uv run mypy . \
+	uv run flake8 src tests
+	uv run mypy src tests \
 		--warn-return-any \
 		--warn-unused-ignores \
 		--ignore-missing-imports \
@@ -26,5 +24,5 @@ lint:
 		--check-untyped-defs
 
 lint-strict:
-	uv run flake8 .
-	uv run mypy . --strict
+	uv run flake8 src tests
+	uv run mypy src tests --strict

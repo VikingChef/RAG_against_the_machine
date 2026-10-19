@@ -19,6 +19,9 @@ htmlcov/
 .vscode/
 .DS_Store
 
+# Local Python version selection
+.python-version
+
 # Generated project data
 data/processed/
 outputs/
@@ -32,3 +35,7 @@ RAG.pdf
 datasets_public.zip
 moulinette.zip
 vllm-0.10.1.zip
+
+# Downloaded source corpus and evaluation datasets
+data/raw/
+data/datasets/
